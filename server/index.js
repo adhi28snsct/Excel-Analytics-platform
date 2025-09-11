@@ -1,39 +1,81 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import mongoose from 'mongoose';
+// index.js
 
-import authRoutes from './routes/authRoutes.js';
-import uploadRoutes from './routes/uploadRoutes.js';
-import historyRoutes from './routes/historyRoutes.js';
-app.use('/api', historyRoutes);
+import dotenv from "dotenv";
 dotenv.config();
 
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
+
+// Import your routers
+import authRoutes     from "./routes/authRoutes.js";
+import uploadRoutes   from "./routes/uploadRoutes.js";
+import historyRoutes  from "./routes/historyRoutes.js";
+import adminRoutes    from "./routes/adminRoutes.js";
+import fileRoutes     from "./routes/files.js";
+import analysisRoutes from "./routes/analysisRoutes.js";
+
 const app = express();
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI;
 
 // Middleware
-app.use(express.json());
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  credentials: true
+}));
+app.use(express.json({ limit: "10mb" }));
 
-// Root route for sanity check
-app.get('/', (req, res) => {
-  res.send('API is working!');
+// Health check
+app.get("/ping", (req, res) => {
+  res.send("pong");
 });
 
-// Mount only once per route group!
-app.use('/api/auth', authRoutes);       // login/register will be under /api/auth
-app.use('/api/upload', uploadRoutes);   // file upload APIs (if needed)
+// Mount routers on relative paths
+app.use("/api/auth",     authRoutes);
+app.use("/api/upload",   uploadRoutes);
+app.use("/api/history",  historyRoutes);
+app.use("/api/admin",    adminRoutes);
+app.use("/api/files",    fileRoutes);
+app.use("/api/analysis", analysisRoutes);
 
-// MongoDB connection
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  const status = err.status || 500;
+  res.status(status).json({
+    error: err.message || "Internal Server Error"
+  });
+});
+
+// Connect to MongoDB and start server
+const PORT      = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error("❌ MONGO_URI is not defined in .env");
+  process.exit(1);
+}
+
 mongoose
   .connect(MONGO_URI, {
-    useNewUrlParser: true,
+    useNewUrlParser:    true,
     useUnifiedTopology: true
   })
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err.message));
+  .then(() => {
+    console.log("✅ Connected to MongoDB");
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error("❌ MongoDB connection error:", err.message);
+    process.exit(1);
+  });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+// Graceful shutdown
+process.on("SIGINT",  () => { console.log("🔌 SIGINT received");  process.exit(0); });
+process.on("SIGTERM", () => { console.log("🔌 SIGTERM received"); process.exit(0); });

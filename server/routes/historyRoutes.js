@@ -1,9 +1,10 @@
-import express from 'express';
-import verifyToken from '../middleware/verifyToken.js';
-import { getUserHistory } from '../controllers/historyController.js';
+import express from "express";
+import verifyToken from "../middleware/verifyToken.js";
+import { getUserHistory } from "../controllers/historyController.js";
 
 const router = express.Router();
 
-router.get('/history', verifyToken, getUserHistory);
+// 📜 Get paginated upload history
+router.get("/", verifyToken, getUserHistory);
 
 export default router;
