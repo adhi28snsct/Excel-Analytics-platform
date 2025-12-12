@@ -2,10 +2,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+// A beautifully styled component for displaying key statistics
 const StatCard = ({ title, value }) => (
-  <div className="bg-white rounded-lg shadow-md p-6 text-center">
-    <h3 className="text-lg font-semibold text-gray-700">{title}</h3>
-    <p className="text-3xl font-bold text-indigo-600 mt-2">{value}</p>
+  <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl p-6 text-center transform transition-transform duration-300 hover:scale-105">
+    <h3 className="text-sm md:text-md font-semibold text-gray-800 uppercase tracking-wide">{title}</h3>
+    <p className="text-4xl md:text-5xl font-bold text-indigo-700 mt-2">{value}</p>
   </div>
 );
 
@@ -107,93 +108,96 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-200 via-purple-300 to-indigo-700">
-        <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
+        <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-300 to-indigo-700 p-8 text-sans">
+    <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-300 to-indigo-700 p-8 font-sans">
       {/* Header with Logout */}
       <div className="flex justify-between items-center mb-12">
-        <h1 className="text-4xl font-bold text-black drop-shadow">Welcome, Admin</h1>
+        <h1 className="text-4xl font-bold text-white drop-shadow-lg">Welcome, Admin</h1>
         <button
           onClick={handleLogout}
-          className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+          className="bg-red-600/80 backdrop-blur-sm text-white px-6 py-2 rounded-full font-semibold shadow-lg hover:bg-red-700 transition-colors transform hover:scale-105"
         >
           Logout
         </button>
       </div>
 
-      {error && <p className="text-center text-red-600 mb-6">{error}</p>}
+      {error && <p className="text-center text-red-300 mb-6 font-medium">{error}</p>}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <StatCard title="Total Users" value={stats.totalUsers || 0} />
         <StatCard title="Total Uploads" value={stats.totalUploads || 0} />
         <StatCard title="Verified Uploads" value={stats.verifiedUploads || 0} />
         <StatCard title="Active Users" value={stats.activeUsers || 0} />
       </div>
 
-      {/* Recent Uploads */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-12">
-        <h2 className="text-xl font-semibold mb-4 text-indigo-700">Recent Uploads</h2>
-        {recentUploads.length === 0 ? (
-          <p className="text-gray-600">No recent uploads found.</p>
-        ) : (
-          <ul className="space-y-3">
-            {recentUploads.map(upload => (
-              <li key={upload._id} className="bg-gray-100 p-4 rounded">
-                <p className="font-medium">{upload.filename}</p>
-                <p className="text-sm text-gray-600">by {upload.user?.email || 'Unknown'}</p>
-                <p className="text-xs text-gray-500">
-                  Uploaded on {new Date(upload.createdAt).toLocaleString()}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* Users List */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-4 text-indigo-700">All Users</h2>
-        {users.length === 0 ? (
-          <p className="text-gray-600">No users found.</p>
-        ) : (
-          <ul className="space-y-2 max-h-96 overflow-y-auto">
-            {users.map(user => {
-              const userId = user._id || user.id || user.email; // fallback ID
-              return (
-                <li key={userId} className="bg-gray-100 p-3 rounded flex justify-between items-center">
+      <div className="space-y-12">
+        {/* Recent Uploads Section */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800">Recent Uploads</h2>
+          {recentUploads.length === 0 ? (
+            <p className="text-gray-600 text-center py-6">No recent uploads found.</p>
+          ) : (
+            <ul className="space-y-4">
+              {recentUploads.map(upload => (
+                <li key={upload._id} className="bg-white rounded-lg shadow-sm p-5 flex justify-between items-center transition-transform hover:scale-[1.01]">
                   <div>
-                    <p>{user.name || 'Unnamed'} — {user.email}</p>
-                  </div>
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => deactivateUser(userId)}
-                      className="text-yellow-600 hover:underline"
-                    >
-                      Deactivate
-                    </button>
-                    <button
-                      onClick={() => deleteUserFiles(userId)}
-                      className="text-indigo-600 hover:underline"
-                    >
-                      Delete Files
-                    </button>
-                    <button
-                      onClick={() => deleteUser(userId)}
-                      className="text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
+                    <p className="font-semibold text-gray-900">{upload.filename}</p>
+                    <p className="text-sm text-gray-500">by <span className="text-indigo-600 font-medium">{upload.user?.email || 'Unknown'}</span></p>
+                    <p className="text-xs text-gray-400 mt-1">Uploaded on {new Date(upload.createdAt).toLocaleString()}</p>
                   </div>
                 </li>
-              );
-            })}
-          </ul>
-        )}
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Users List Section */}
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800">All Users</h2>
+          {users.length === 0 ? (
+            <p className="text-gray-600 text-center py-6">No users found.</p>
+          ) : (
+            <ul className="space-y-4 max-h-96 overflow-y-auto pr-2">
+              {users.map(user => {
+                const userId = user._id || user.id || user.email;
+                return (
+                  <li key={userId} className="bg-white rounded-lg shadow-sm p-5 flex flex-col md:flex-row justify-between items-start md:items-center transition-transform hover:scale-[1.01]">
+                    <div>
+                      <p className="font-semibold text-gray-900">{user.name || 'Unnamed'}</p>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                    </div>
+                    <div className="space-x-2 mt-4 md:mt-0 flex-shrink-0">
+                      <button
+                        onClick={() => deactivateUser(userId)}
+                        className="text-yellow-600 hover:text-yellow-700 font-medium"
+                      >
+                        Deactivate
+                      </button>
+                      <button
+                        onClick={() => deleteUserFiles(userId)}
+                        className="text-indigo-600 hover:text-indigo-700 font-medium"
+                      >
+                        Delete Files
+                      </button>
+                      <button
+                        onClick={() => deleteUser(userId)}
+                        className="text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );

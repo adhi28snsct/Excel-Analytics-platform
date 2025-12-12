@@ -25,17 +25,16 @@ export default function Chart({ fileId }) {
   useEffect(() => {
     const fetchAnalysis = async () => {
       try {
-        if (!fileId || fileId.trim().length !== 24) throw new Error('Invalid file ID format');
+        if (!fileId || fileId.trim().length !== 24) {
+          throw new Error('Invalid file ID format');
+        }
 
         const res = await axios.get(
           `http://localhost:5000/api/analysis/${fileId.trim()}`,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
 
-        console.log("✅ Chart Data from API:", res.data);
-
-        const { chartType } = res.data;
-        setChartData(res.data);
+        console.log('✅ Chart Data from API:', res.data);
 
         const normalizeChartType = (type) => {
           const map = {
@@ -45,12 +44,15 @@ export default function Chart({ fileId }) {
             'pie-3d': 'pie-3d',
           };
           const normalized = (type || 'bar').toLowerCase();
-          return availableChartTypes.some(t => t.value === map[normalized] || normalized)
+          return availableChartTypes.some(
+            (t) => t.value === map[normalized] || t.value === normalized
+          )
             ? map[normalized] || normalized
             : 'bar';
         };
 
-        setSelectedChartType(normalizeChartType(chartType));
+        setChartData(res.data);
+        setSelectedChartType(normalizeChartType(res.data.chartType));
       } catch (err) {
         console.error('❌ Error fetching analysis:', err);
         setError(err.response?.data?.error || err.message || 'Failed to load chart');
@@ -73,10 +75,23 @@ export default function Chart({ fileId }) {
     chartData: chartPoints = [],
   } = chartData;
 
-  const xData = chartPoints.map(p => p[xAxis]);
-  const yData = chartPoints.map(p => p[yAxis]);
-  const zData = chartPoints.map(p => p[zAxis]);
-  const labels = xData;
+  // 1) parse into numbers
+  const rawX = chartPoints.map((p) => parseFloat(p[xAxis] ?? 0));
+  const rawY = chartPoints.map((p) => parseFloat(p[yAxis] ?? 0));
+  const rawZ = chartPoints.map((p) => parseFloat(p[zAxis] ?? 0));
+
+  // 2) if line chart, sort by X ascending
+  let xData = rawX;
+  let yData = rawY;
+  let zData = rawZ;
+  if (selectedChartType === 'line') {
+    const idxs = rawX.map((_, i) => i).sort((a, b) => rawX[a] - rawX[b]);
+    xData = idxs.map((i) => rawX[i]);
+    yData = idxs.map((i) => rawY[i]);
+    zData = idxs.map((i) => rawZ[i]);
+  }
+
+  const labels = xData.map((v) => String(v));
 
   return (
     <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-br from-purple-200 via-indigo-300 to-blue-500">
@@ -89,7 +104,9 @@ export default function Chart({ fileId }) {
             className="border border-gray-300 rounded px-3 py-1"
           >
             {availableChartTypes.map(({ label, value }) => (
-              <option key={value} value={value}>{label}</option>
+              <option key={value} value={value}>
+                {label}
+              </option>
             ))}
           </select>
         </div>
