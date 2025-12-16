@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import axios from 'axios';
+import { useState } from "react";
+import api from "../api/axios";
 
 const ResetPassword = () => {
-  const [token, setToken] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [msg, setMsg] = useState('');
+  const [token, setToken] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [msg, setMsg] = useState("");
 
   const handleReset = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/api/auth/reset-password', {
+      const res = await api.post("/api/auth/reset-password", {
         token,
         newPassword,
       });
       setMsg(res.data.message);
     } catch (err) {
-      setMsg(err.response?.data?.error || 'Reset failed');
+      setMsg(err.response?.data?.error || "Reset failed");
     }
   };
 

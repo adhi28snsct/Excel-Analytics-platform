@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import api from "../api/axios";
 
 const StatCard = ({ title, value }) => (
   <div className="bg-white rounded-lg shadow-md p-6 text-center">
@@ -28,10 +28,10 @@ const Admin = () => {
       return;
     }
 
-    axios
-      .get('http://localhost:5000/api/admin/dashboard', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+   api.get('/api/admin/dashboard', {
+  headers: { Authorization: `Bearer ${token}` },
+})
+
       .then(res => {
         setUsers(res.data.users || []);
         setUploads(res.data.recentUploads || []);
@@ -52,9 +52,10 @@ const Admin = () => {
   const deleteUser = async userId => {
     if (!window.confirm('Delete this user?')) return;
     const token = localStorage.getItem('token');
-    await axios.delete(`http://localhost:5000/api/admin/users/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await api.delete(`/api/admin/users/${userId}`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+
     setUsers(users.filter(u => u._id !== userId));
     setUploads(uploads.filter(f => f.user?._id !== userId));
   };
@@ -62,19 +63,21 @@ const Admin = () => {
   const deleteUpload = async uploadId => {
     if (!window.confirm('Delete this file?')) return;
     const token = localStorage.getItem('token');
-    await axios.delete(`http://localhost:5000/api/admin/uploads/${uploadId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+   await api.delete(`/api/admin/uploads/${uploadId}`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+
     setUploads(uploads.filter(f => f._id !== uploadId));
   };
 
   const toggleVerify = async (uploadId, currentlyVerified) => {
     const token = localStorage.getItem('token');
-    await axios.patch(
-      `http://localhost:5000/api/admin/uploads/${uploadId}/verify`,
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+  await api.patch(
+  `/api/admin/uploads/${uploadId}/verify`,
+  {},
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+
     setUploads(uploads.map(f =>
       f._id === uploadId ? { ...f, verified: !currentlyVerified } : f
     ));

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import api from "../api/axios"; // adjust path if needed
 
 export default function Analytics() {
   const { id } = useParams(); // fileId
@@ -12,20 +13,19 @@ export default function Analytics() {
     const fetchAnalytics = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/files/${id}/analysis`, {
-          method: 'GET',
+        const response = await api.get(`/api/files/${id}/analysis`, {
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
+
 
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(errorText || 'Failed to fetch analysis');
         }
 
-        const result = await response.json();
+        setAnalysis(response.data);
         setAnalysis(result);
       } catch (err) {
         setError(err.message);
@@ -98,11 +98,10 @@ export default function Analytics() {
                           {inferredColumns.map((col) => (
                             <td
                               key={col}
-                              className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${
-                                [analysis.xAxis, analysis.yAxis, analysis.zAxis].includes(col)
-                                  ? 'text-purple-600 font-semibold'
-                                  : ''
-                              }`}
+                              className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${[analysis.xAxis, analysis.yAxis, analysis.zAxis].includes(col)
+                                ? 'text-purple-600 font-semibold'
+                                : ''
+                                }`}
                             >
                               {row[col]}
                             </td>
