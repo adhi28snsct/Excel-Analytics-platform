@@ -1,34 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import api from "../api/axios"; // adjust path if needed
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import api from "../api/axios";
 
 export default function Analytics() {
   const { id } = useParams(); // fileId
   const navigate = useNavigate();
+
   const [analysis, setAnalysis] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
+
         const response = await api.get(`/api/files/${id}/analysis`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || 'Failed to fetch analysis');
-        }
-
+        // ✅ Axios returns data directly
         setAnalysis(response.data);
-        setAnalysis(result);
       } catch (err) {
-        setError(err.message);
+        setError(
+          err.response?.data?.error ||
+            err.message ||
+            "Failed to fetch analysis"
+        );
       } finally {
         setLoading(false);
       }
@@ -42,18 +42,18 @@ export default function Analytics() {
     : Object.keys(analysis?.rawData?.[0] || {});
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-200 via-purple-300 to-indigo-700 font-sans">
+    <div className="min-h-screen flex items-center see justify-center p-6 bg-gradient-to-br from-blue-200 via-purple-300 to-indigo-700 font-sans">
       <div className="w-full max-w-4xl bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-extrabold text-gray-800">📊 File Analysis</h2>
+          <h2 className="text-3xl font-extrabold text-gray-800">
+            📊 File Analysis
+          </h2>
+
           <button
             onClick={() => navigate(-1)}
             className="flex items-center space-x-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-full shadow hover:bg-gray-300 transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-            <span>Go Back</span>
+            <span>⬅ Go Back</span>
           </button>
         </div>
 
@@ -62,46 +62,73 @@ export default function Analytics() {
             <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
+
         {error && (
-          <div className="bg-red-50 text-red-700 border border-red-200 p-4 rounded-xl mb-4 font-medium text-center">
+          <div className="bg-red-50 text-red-700 border border-red-200 p-4 rounded-xl mb-4 text-center font-medium">
             {error}
           </div>
         )}
 
         {!loading && !error && analysis && (
           <div className="space-y-8">
+            {/* Metadata */}
             <div className="bg-white rounded-2xl shadow-lg p-6 space-y-3 border border-gray-100">
-              <p className="text-gray-700"><strong>Filename:</strong> <span className="text-indigo-600 font-medium">{analysis.filename}</span></p>
-              <p className="text-gray-700"><strong>Chart Type:</strong> <span className="text-indigo-600 font-medium">{analysis.chartType}</span></p>
-              <p className="text-gray-700"><strong>X Axis:</strong> <span className="text-indigo-600 font-medium">{analysis.xAxis}</span></p>
-              <p className="text-gray-700"><strong>Y Axis:</strong> <span className="text-indigo-600 font-medium">{analysis.yAxis}</span></p>
-              {analysis.zAxis && <p className="text-gray-700"><strong>Z Axis:</strong> <span className="text-indigo-600 font-medium">{analysis.zAxis}</span></p>}
+              <p>
+                <strong>Filename:</strong>{" "}
+                <span className="text-indigo-600">{analysis.filename}</span>
+              </p>
+              <p>
+                <strong>Chart Type:</strong>{" "}
+                <span className="text-indigo-600">{analysis.chartType}</span>
+              </p>
+              <p>
+                <strong>X Axis:</strong>{" "}
+                <span className="text-indigo-600">{analysis.xAxis}</span>
+              </p>
+              <p>
+                <strong>Y Axis:</strong>{" "}
+                <span className="text-indigo-600">{analysis.yAxis}</span>
+              </p>
+              {analysis.zAxis && (
+                <p>
+                  <strong>Z Axis:</strong>{" "}
+                  <span className="text-indigo-600">{analysis.zAxis}</span>
+                </p>
+              )}
             </div>
 
+            {/* Table */}
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-              <h3 className="text-xl font-bold mb-4 text-gray-800">📄 Data Preview</h3>
+              <h3 className="text-xl font-bold mb-4">📄 Data Preview</h3>
+
               {inferredColumns.length > 0 ? (
-                <div className="overflow-auto max-h-[400px] border border-gray-200 rounded-lg shadow-inner">
+                <div className="overflow-auto max-h-[400px] border rounded-lg">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50 sticky top-0 z-10">
+                    <thead className="bg-gray-50 sticky top-0">
                       <tr>
                         {inferredColumns.map((col) => (
-                          <th key={col} className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                          <th
+                            key={col}
+                            className="px-6 py-3 text-left text-xs font-bold uppercase text-gray-500"
+                          >
                             {col}
                           </th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody>
                       {analysis.rawData.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-gray-100 transition-colors">
+                        <tr key={idx} className="hover:bg-gray-100">
                           {inferredColumns.map((col) => (
                             <td
                               key={col}
-                              className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${[analysis.xAxis, analysis.yAxis, analysis.zAxis].includes(col)
-                                ? 'text-purple-600 font-semibold'
-                                : ''
-                                }`}
+                              className={`px-6 py-3 text-sm ${
+                                [analysis.xAxis, analysis.yAxis, analysis.zAxis].includes(
+                                  col
+                                )
+                                  ? "text-purple-600 font-semibold"
+                                  : "text-gray-900"
+                              }`}
                             >
                               {row[col]}
                             </td>
@@ -112,18 +139,17 @@ export default function Analytics() {
                   </table>
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-6">No columns detected in this analysis.</p>
+                <p className="text-gray-500 text-center">
+                  No columns detected.
+                </p>
               )}
             </div>
 
             <button
-              className="w-full mt-6 flex items-center justify-center space-x-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full shadow-lg hover:bg-indigo-700 transition-colors transform hover:scale-105"
               onClick={() => navigate(`/dashboard/chart/${analysis.file}`)}
+              className="w-full py-3 bg-indigo-600 text-white rounded-full font-semibold hover:bg-indigo-700 transition"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-              </svg>
-              <span>View Chart</span>
+              📈 View Chart
             </button>
           </div>
         )}
